@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "633676274109",
+    "project_id": "fitvera-app",
+    "storage_bucket": "fitvera-app.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:633676274109:android:debedc26be9f736e2ddad4",
+        "android_client_info": {
+          "package_name": "com.example.fitvera"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "633676274109-b4a6v23j5jo43uoueaknn9vf0n8cfolg.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.fitvera",
+            "certificate_hash": "7d344c97206bdc9bfad410316b67f13f56e227d8"
+          }
+        },
+        {
+          "client_id": "633676274109-4t0f3ka0aojjtdiqpi17ai1f205aqtp2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCMd2O2DuFPRohsKazKT9xFm4Eftt8pkDg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "633676274109-4t0f3ka0aojjtdiqpi17ai1f205aqtp2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
