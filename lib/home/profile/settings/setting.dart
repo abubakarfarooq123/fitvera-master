@@ -6,14 +6,14 @@ import '../../home_navbar.dart';
 import 'languages.dart';
 
 
-class Settings extends StatefulWidget {
-  const Settings({Key? key}) : super(key: key);
+class Settings_App extends StatefulWidget {
+  const Settings_App({Key? key}) : super(key: key);
 
   @override
-  State<Settings> createState() => _SettingsState();
+  State<Settings_App> createState() => _Settings_AppState();
 }
 
-class _SettingsState extends State<Settings> {
+class _Settings_AppState extends State<Settings_App> {
 
   @override
   Widget build(BuildContext context) {

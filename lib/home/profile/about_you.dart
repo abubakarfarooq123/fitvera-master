@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cupertino_datetime_picker/flutter_cupertino_datetime_picker.dart';
@@ -26,21 +28,84 @@ class _About_youState extends State<About_you> {
   int selectedCentimeters = 0;
   bool useFeetAndInches = false;
   bool switchNumbers = false;
-
+  List<String> gender = ['Male', 'Female'];
+  String selected = '';
   String selectedHeight = '';
+  String selectedWeight = '';
+
+  String? selectedGender;
+
   TextEditingController _dateController = TextEditingController();
   @override
   void initState() {
     super.initState();
     _dateController.text = _selectedDate.toString();
+    FirebaseFirestore.instance
+        .collection('registration')
+        .doc(FirebaseAuth.instance.currentUser?.uid)
+        .get()
+        .then((DocumentSnapshot documentSnapshot) {
+      if (documentSnapshot.exists) {
+        final selectedHeight = documentSnapshot.get('height');
+        final selectedWeight = documentSnapshot.get('weight');
+        _textEditingController.text = selectedHeight;
+        _textEditingController1.text = selectedWeight;
+      }
+    });
+    FirebaseFirestore.instance
+        .collection('registration')
+        .doc(FirebaseAuth.instance.currentUser?.uid)
+        .get()
+        .then((DocumentSnapshot documentSnapshot) {
+      if (documentSnapshot.exists) {
+        var selectedGender = documentSnapshot.get('gender');
+        setState(() {
+          selectedGender = selectedGender;
+        });
+      }
+    });
+    FirebaseFirestore.instance
+        .collection('registration')
+        .doc(FirebaseAuth.instance.currentUser?.uid)
+        .get()
+        .then((DocumentSnapshot documentSnapshot) {
+      if (documentSnapshot.exists) {
+        final selectedBirthdayDate = documentSnapshot.get('dob');
+        setState(() {
+          _dateController.text = selectedBirthdayDate;
+        });
+      }
+    });
+
+
   }
 
 
-  void updateSelectedHeight(String height) {
-    setState(() {
-      selectedHeight = height;
+  void _updateSelectedValues() {
+    String height = _textEditingController.text;
+    String weight = _textEditingController1.text;
+    String birthdayDate = _dateController.text;
+
+
+    // Update selected height and weight in Firebase
+    FirebaseFirestore.instance
+        .collection('registration')
+        .doc(FirebaseAuth.instance.currentUser?.uid)
+        .update({
+      'height': height,
+      'weight': weight,
+      'gender': selectedGender,
+      'dob': birthdayDate,
+
+    })
+        .then((_) {
+      print('Selected values updated successfully');
+    })
+        .catchError((error) {
+      print('Error updating selected values: $error');
     });
   }
+
 
   int selectedNumber1 = 0;
   int selectedNumber2 = 0;
@@ -48,10 +113,7 @@ class _About_youState extends State<About_you> {
 
   TextEditingController _textEditingController1 = TextEditingController();
 
-  TextEditingController _date = TextEditingController();
-  List<String> gender = ['Male', 'Female'];
-  String selected = '';
-  var setvalue;
+  // String? setGender;
 
   @override
   void dispose() {
@@ -59,6 +121,22 @@ class _About_youState extends State<About_you> {
     super.dispose();
   }
 
+  // Future updateUser(
+  //     weight,
+  //     height,
+  //     date,
+  //     gender,
+  //     ) async {
+  //   await FirebaseFirestore.instance
+  //       .collection("registration")
+  //       .doc(FirebaseAuth.instance.currentUser?.uid)
+  //       .update({
+  //     'name': weight,
+  //     'email': height,
+  //     'phone': date,
+  //     'phone': gender,
+  //   });
+  // }
 
   Future<void> _showDatePicker(BuildContext context) async {
     showDialog(
@@ -216,49 +294,54 @@ class _About_youState extends State<About_you> {
               child: Form(
                 child: Column(
                   children: <Widget>[
-                    Container(
-                      width: MediaQuery.of(context).size.width/1.1,
-                      height: 60,
-                      padding: EdgeInsets.only(left: 16, right: 16),
-                      decoration: BoxDecoration(
-                          color: Colors.grey.withOpacity(0.2),
-                          border: Border.all(color: Colors.grey, width: 1),
-                          borderRadius: BorderRadius.circular(5)),
-                      child: DropdownButton(
-                        hint: Padding(
-                          padding: const EdgeInsets.only(top: 10),
-                          child: Text(
-                            'Your Gender:',
-                            style: TextStyle(
-                              color: Colors.black54,
-                            ),
-                          ),
-                        ),
-                        isExpanded: true,
-                        icon: Padding(
-                          padding: const EdgeInsets.only(top: 12),
-                          child: Icon(
-                            Icons.arrow_drop_down,
-                            size: 40,
-                          ),
-                        ),
-                        underline: SizedBox(),
-                        value: setvalue,
-                        onChanged: (newValue) {
-                          setState(() {
-                            setvalue = newValue;
-                          });
-                        },
-                        items: gender.map((String value) {
-                          return new DropdownMenuItem<String>(
-                            value: value,
-                            child: new Text(value),
-                          );
-                        }).toList(),
-                      ),
-                    ),
+
+                Row(
+                children: [
+                Expanded(
+                child: DropdownButtonFormField<String>(
+                hint: Padding(
+                padding: const EdgeInsets.only(top: 0),
+                child: Text(
+                  'Your Gender:',
+                  style: TextStyle(
+                    color: Colors.black54,
+                  ),
+                ),
+              ),
+              isExpanded: true,
+              icon: Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Icon(
+                  Icons.arrow_drop_down,
+                  size: 0,
+                ),
+              ),
+              value: selectedGender,
+              decoration: InputDecoration(
+                labelText: 'Gender',
+                border: OutlineInputBorder(),
+              ),
+              onChanged: (newValue) {
+                setState(() {
+                  selectedGender = newValue;
+                });
+              },
+              items: [
+                DropdownMenuItem<String>(
+                  value: 'Male',
+                  child: Text('Male'),
+                ),
+                DropdownMenuItem<String>(
+                  value: 'Female',
+                  child: Text('Female'),
+                ),
+              ],
+            ),
+    ),
+    ],
+                ),
                     Text(
-                      selected,
+                      selected ?? '', // Add a null check to prevent errors
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 20.0,
@@ -369,6 +452,7 @@ class _About_youState extends State<About_you> {
                         child: TextFormField(
                           controller: _textEditingController,
                           keyboardType: TextInputType.number,
+
                           decoration: InputDecoration(
                             hintText: 'Height',
                             border: OutlineInputBorder(
@@ -397,10 +481,24 @@ class _About_youState extends State<About_you> {
                             ),
                           ),
                           onTap: () async {
-                            List<dynamic> selectedHeight = await showDialog(
+                            List<dynamic>? selectedHeight = await showDialog(
                               context: context,
                               builder: (context) => HeightPickerDialog(),
                             );
+                            if (selectedHeight != null) {
+                              if (selectedHeight.length == 2) {
+                                // Selected height is in feet and inches
+                                int feet = selectedHeight[0];
+                                int inches = selectedHeight[1];
+                                String heightText = '$feet feet, $inches inches';
+                                _textEditingController.text = heightText;
+                              } else if (selectedHeight.length == 1) {
+                                // Selected height is in centimeters
+                                int centimeters = selectedHeight[0];
+                                String heightText = '$centimeters cm';
+                                _textEditingController.text = heightText;
+                              }
+                            }
                           },
                         ),
                       ),
@@ -422,31 +520,42 @@ class _About_youState extends State<About_you> {
                                 color: Colors.grey.withOpacity(0.2),
                                 width: 2.0,
                               ),
-                              borderRadius:
-                              BorderRadius.all(Radius.circular(10.0)),
+                              borderRadius: BorderRadius.all(Radius.circular(10.0)),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderSide: BorderSide(
                                 color: Colors.grey,
                                 width: 2.0,
                               ),
-                              borderRadius:
-                              BorderRadius.all(Radius.circular(10.0)),
+                              borderRadius: BorderRadius.all(Radius.circular(10.0)),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderSide: BorderSide(
                                 color: Colors.grey,
                                 width: 2.0,
                               ),
-                              borderRadius:
-                              BorderRadius.all(Radius.circular(10.0)),
+                              borderRadius: BorderRadius.all(Radius.circular(10.0)),
                             ),
                           ),
                           onTap: () async {
-                            List<dynamic> selectedHeight = await showDialog(
+                            List<dynamic>? selectedWeight = await showDialog(
                               context: context,
                               builder: (context) => WidthPickerDialog(),
                             );
+
+                            if (selectedWeight != null && selectedWeight.isNotEmpty) {
+                              if (selectedWeight.length == 1) {
+                                // Selected weight is in kilograms
+                                int kg = selectedWeight[0];
+                                String weightText = '$kg KG';
+                                _textEditingController1.text = weightText;
+                              } else if (selectedWeight.length == 2) {
+                                // Selected weight is in pounds
+                                int pound = selectedWeight[1];
+                                String weightText2 = '$pound Lbs';
+                                _textEditingController1.text = weightText2;
+                              }
+                            }
                           },
                         ),
                       ),
@@ -460,6 +569,8 @@ class _About_youState extends State<About_you> {
                               context,
                               MaterialPageRoute(
                                   builder: (context) => Edit_Profile()));
+                          _updateSelectedValues();
+
                         },
                         child: Container(
                           height: 50,

@@ -1,10 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../home/profile/about_you.dart';
-import '../onboarding/intro_1.dart';
 import 'login.dart';
 
 class SignUp extends StatefulWidget {
@@ -15,6 +16,102 @@ class SignUp extends StatefulWidget {
 }
 
 class _SignUpState extends State<SignUp> {
+
+  final _formKey = GlobalKey<FormState>();
+
+  var name="";
+  var email="";
+  var password="";
+  var confirmPassword="";
+
+
+  final nameController = TextEditingController();
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+  final confirmPasswordController = TextEditingController();
+
+
+  @override
+  void dispose(){
+    nameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    confirmPasswordController.dispose();
+    super.dispose();
+  }
+  Future<User?> registration() async {
+    if (password == confirmPassword) {
+      try {
+        User? user = (await FirebaseAuth.instance.createUserWithEmailAndPassword(
+            email: email, password: password))
+            .user;
+        user?.updateProfile(displayName: name);
+        await FirebaseFirestore.instance
+            .collection('registration')
+            .doc(FirebaseAuth.instance.currentUser?.uid)
+            .set({
+          'name': name,
+          'email': email,
+          'phone': "",
+          "uid": FirebaseAuth.instance.currentUser?.uid,
+          "dob":"",
+          "height":"",
+          "weight":"",
+          "location":"",
+          "gender":"",
+          "image":"",
+          "age":"",
+          "password":password
+
+        })
+            .then((value) => print('User Added'))
+            .catchError((error) => print('Falied to add user: $error'));
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => About_you(),
+          ),
+        );
+      } on FirebaseAuthException catch (e) {
+        if (e.code == 'weak-password') {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            backgroundColor: Colors.red,
+            content: Text(
+              'Password Provided is too weak',
+              style: GoogleFonts.limelight(
+                fontSize: 15.0,
+                color: Colors.white,
+              ),
+            ),
+          ));
+        } else if (e.code == 'email-already-in-use') {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            backgroundColor: Colors.red,
+            content: Text(
+              'Account already exists',
+              style: GoogleFonts.limelight(
+                fontSize: 15.0,
+                color: Colors.white,
+              ),
+            ),
+          ));
+        }
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        backgroundColor: Colors.red,
+        content: Text(
+          "Password and Conform Password Does'nt match",
+          style: GoogleFonts.limelight(
+            fontSize: 15.0,
+            color: Colors.white,
+          ),
+        ),
+      ));
+    }
+  }
+
   bool _obscureText = true;
   bool _obscureText1 = true;
 
@@ -86,7 +183,8 @@ class _SignUpState extends State<SignUp> {
                   Padding(
                     padding: const EdgeInsets.only(left: 12),
                     child: Text("Enter your information below or \n"
-                        "login with a other account.",style: GoogleFonts.poppins(
+                        "login with a other account.",
+                      style: GoogleFonts.poppins(
                         color: Colors.black,
                         fontSize: 14,
                         fontWeight: FontWeight.bold
@@ -103,6 +201,7 @@ class _SignUpState extends State<SignUp> {
                   Padding(
                     padding: const EdgeInsets.only(left: 20,right: 10),
                     child: new Form(
+                      key: _formKey,
                       child: Column(
                         children: <Widget>[
                           Padding(
@@ -116,8 +215,38 @@ class _SignUpState extends State<SignUp> {
                                   fontSize: 15.0,
                                 ),
                               ),
+                                controller: emailController,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please Enter Email';
+                                  } else if (!value.contains('@')) {
+                                    return 'Please Enter Valid Email';
+                                  }
+                                  return null;
+                                }
                             ),
                           ),
+                          Padding(
+                            padding: const EdgeInsets.only(left: 18,right: 18,bottom: 15),
+                            child: TextFormField(
+                                autofocus: false,
+                                decoration: InputDecoration(
+                                  hintText: 'Name',
+                                  errorStyle: GoogleFonts.roboto(
+                                    color: Colors.redAccent,
+                                    fontSize: 15.0,
+                                  ),
+                                ),
+                                controller: nameController,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please Enter Name';
+                                  }
+                                  return null;
+                                }
+                            ),
+                          ),
+
                           Padding(
                             padding: const EdgeInsets.only(left: 18,right: 18,bottom: 15),
                             child: TextFormField(
@@ -141,6 +270,13 @@ class _SignUpState extends State<SignUp> {
                                   },
                                 ),
                               ),
+                                controller: passwordController,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please Enter Password';
+                                  }
+                                  return null;
+                                }
                             ),
                           ),
                           Padding(
@@ -166,6 +302,13 @@ class _SignUpState extends State<SignUp> {
                                   },
                                 ),
                               ),
+                                controller: confirmPasswordController,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please Enter Re-Password';
+                                  }
+                                  return null;
+                                }
                             ),
                           ),
 
@@ -196,11 +339,15 @@ class _SignUpState extends State<SignUp> {
                                 child: Center(
                                   child: InkWell(
                                     onTap: (){
-                                      Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (context) =>
-                                                  About_you()));
+                                      if (_formKey.currentState!.validate()) {
+                                        setState(() {
+                                          name = nameController.text;
+                                          email = emailController.text;
+                                          password = passwordController.text;
+                                          confirmPassword = confirmPasswordController.text;
+                                        });
+                                        registration();
+                                      }
                                     },
                                     child: Container(
                                       height: 60.0,

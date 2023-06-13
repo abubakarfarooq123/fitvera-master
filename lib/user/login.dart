@@ -1,12 +1,12 @@
-import 'package:fitvera/home/home.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fitvera/home/home_navbar.dart';
 import 'package:fitvera/user/signup.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../onboarding/intro_1.dart';
 import 'forgot_password.dart';
 
 class Login extends StatefulWidget {
@@ -17,6 +17,59 @@ class Login extends StatefulWidget {
 }
 
 class _LoginState extends State<Login> {
+  final formkey = new GlobalKey<FormState>();
+  var email = "";
+  var password = "";
+
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+
+  final storage = new FlutterSecureStorage();
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
+  userlogin() async {
+    try {
+      UserCredential userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(email: email, password: password);
+      print(userCredential.user?.uid);
+      await storage.write(key: "uid", value: userCredential.user?.uid);
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) =>
+                  homeNavBar()));
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'user-not-found') {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          backgroundColor: Colors.orangeAccent,
+          content: Text(
+            'No User Found for that email',
+            style: GoogleFonts.roboto(
+              fontSize: 15.0,
+              color: Colors.white,
+            ),
+          ),
+        ));
+      } else if (e.code == 'wrong-password') {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          backgroundColor: Colors.redAccent,
+          content: Text(
+            'Incorrect Password',
+            style: GoogleFonts.roboto(
+              fontSize: 15.0,
+              color: Colors.white,
+            ),
+          ),
+        ));
+      }
+    }
+  }
   bool _obscureText = true;
 
   @override
@@ -95,6 +148,7 @@ class _LoginState extends State<Login> {
                       Padding(
                         padding: const EdgeInsets.only(left: 20,right: 10),
                         child: new Form(
+                          key: formkey,
                           child: Column(
                             children: <Widget>[
                               Padding(
@@ -108,6 +162,15 @@ class _LoginState extends State<Login> {
                                       fontSize: 15.0,
                                     ),
                                   ),
+                                    controller: emailController,
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'Please Enter Email';
+                                      } else if (!value.contains('@')) {
+                                        return 'Please Enter Valid Email';
+                                      }
+                                      return null;
+                                    }
                                 ),
                               ),
                               Padding(
@@ -133,6 +196,13 @@ class _LoginState extends State<Login> {
                                       },
                                   ),
                                 ),
+                                    controller: passwordController,
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'Please Enter Password';
+                                      }
+                                      return null;
+                                    }
                                 ),
                               ),
                               Padding(
@@ -181,11 +251,13 @@ class _LoginState extends State<Login> {
                                     child: Center(
                                       child: InkWell(
                                         onTap: (){
-                                          Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      homeNavBar()));
+                                          if (formkey.currentState!.validate()) {
+                                            setState(() {
+                                              email = emailController.text;
+                                              password = passwordController.text;
+                                            });
+                                            userlogin();
+                                          }
 
                                         },
                                         child: Container(
